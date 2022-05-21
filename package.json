@@ -1,0 +1,50 @@
+{
+  "name": "ts-react-playground",
+  "version": "0.0.1",
+  "description": "playground",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack",
+    "start": "webpack serve",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "npm run lint -- --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slawwan/ts-react-playground.git"
+  },
+  "keywords": [
+    "ts",
+    "typescript",
+    "react"
+  ],
+  "author": "slawwan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/slawwan/ts-react-playground/issues"
+  },
+  "homepage": "https://github.com/slawwan/ts-react-playground#readme",
+  "devDependencies": {
+    "@types/jest": "^27.5.1",
+    "@typescript-eslint/eslint-plugin": "^5.25.0",
+    "@typescript-eslint/parser": "^5.25.0",
+    "eslint": "^8.16.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^28.1.0",
+    "prettier": "^2.6.2",
+    "ts-jest": "^28.0.2",
+    "ts-loader": "^9.3.0",
+    "typescript": "^4.6.4",
+    "webpack": "^5.72.1",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.9.0"
+  },
+  "dependencies": {
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.4",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0"
+  }
+}
