@@ -37,14 +37,16 @@ type RootSequenceOperator<T extends Operator, TReturn> = T extends (...args: inf
   ? (...args: TParams) => TReturn
   : never;
 
+interface SequenceWithResult<TValue> {
+  calculate: () => TValue;
+}
+
 type NestedSequence<T extends Operators, TValue> = {
   [K in keyof T as T[K] extends OperatorFor<TValue> ? K : never]: NestedSequenceOperator<
     T[K],
     NestedSequence<T, ReturnType<T[K]>>
   >;
-} & {
-  calculate: () => TValue;
-};
+} & SequenceWithResult<TValue>;
 
 type RootSequence<T extends Operators> = {
   [K in keyof T]: RootSequenceOperator<T[K], NestedSequence<T, ReturnType<T[K]>>>;
@@ -53,17 +55,17 @@ type RootSequence<T extends Operators> = {
 type Sequence<T extends Operators> = RootSequence<T>;
 
 function sequence<T extends Operators>(operators: T): Sequence<T> {
-  class _NestedSequence {
-    public constructor(public value: number) {}
+  class _NestedSequence implements SequenceWithResult<unknown> {
+    public constructor(public value: unknown) {}
 
-    public calculate(): number {
+    public calculate(): unknown {
       return this.value;
     }
   }
 
   for (const k in operators) {
     (_NestedSequence.prototype as any)[k] = function (...args: any[]) {
-      return new _NestedSequence(operators[k](this.value, ...args) as any);
+      return new _NestedSequence(operators[k](this.value, ...args));
     };
   }
 
@@ -71,7 +73,7 @@ function sequence<T extends Operators>(operators: T): Sequence<T> {
 
   for (const k in operators) {
     (_RootSequence.prototype as any)[k] = function (...args: any[]) {
-      return new _NestedSequence(operators[k](...args) as any);
+      return new _NestedSequence(operators[k](...args));
     };
   }
 

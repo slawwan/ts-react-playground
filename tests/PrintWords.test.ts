@@ -21,7 +21,8 @@ function printWords(source: WordsSource): string[] {
         visited.add(node);
         const keys = Object.keys(node).sort().reverse(); // можно заменить на сортировку в обратном порядке
         // можно заменить sort+reverse O(NlogN) перебором алфавита O(N)
-        for (const key of keys) { // можно заменить reverse циклом for (let i = keys.length - 1; i >=0; --i)
+        for (const key of keys) {
+          // можно заменить reverse циклом for (let i = keys.length - 1; i >=0; --i)
           stack.push({ letter: key, node: node[key], level: level + 1 });
         }
       }
