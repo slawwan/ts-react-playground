@@ -1,28 +1,4 @@
-/*
-type Operator = (...args: number[]) => number;
-type Operators = Record<string, Operator>;
-
-type NestedSequenceOperator<T extends Operator, TReturn> = T extends (arg: any, ...args: infer TParams) => any
-  ? (...args: TParams) => TReturn
-  : never;
-
-type RootSequenceOperator<T extends Operator, TReturn> = T extends (...args: infer TParams) => any
-  ? (...args: TParams) => TReturn
-  : never;
-
-
-type NestedSequence<T extends Operators> = {
-  [K in keyof T]: NestedSequenceOperator<T[K], NestedSequence<T>>
-} & {
-  calculate: () => number;
-}
-
-type RootSequence<T extends Operators> = {
-  [K in keyof T]: RootSequenceOperator<T[K], NestedSequence<T>>;
-}
-
-type Sequence<T extends Operators> = RootSequence<T>
-*/
+import { Equal, Expect, testTypes } from "./types";
 
 type Operator = (...args: any[]) => any;
 type Operators = Record<string, Operator>;
@@ -82,7 +58,7 @@ function sequence<T extends Operators>(operators: T): Sequence<T> {
 
 const add = (a: number, b: number) => a + b;
 const double = (a: number) => a * 2;
-const toBool = (x: number) => Boolean(x);
+const toBoolean = (x: number) => Boolean(x);
 const negate = (x: boolean) => !x;
 const toNumber = (x: boolean) => Number(x);
 
@@ -97,13 +73,13 @@ describe("sequence", () => {
     expect(s.add(4, 5).add(5).add(4).add(7).double().double().calculate()).toBe(100);
   });
   test("types", () => {
-    const s = sequence({ add, double, toBool, negate, toNumber });
-    const r = s.add(2, 4).add(-6).toBool().negate().toNumber().double().calculate();
+    const s = sequence({ add, double, toBoolean, negate, toNumber });
+    const r = s.add(2, 4).add(-6).toBoolean().negate().toNumber().double().calculate();
     expect(r).toBe(2);
   });
   test("boolean", () => {
-    const s = sequence({ add, double, toBool, negate, toNumber });
-    const r = s.add(2, 4).toBool().calculate();
+    const s = sequence({ add, double, toBoolean, negate, toNumber });
+    const r = s.add(2, 4).toBoolean().calculate();
     expect(r).toBe(true);
   });
   test("reuse root", () => {
@@ -127,3 +103,60 @@ describe("sequence", () => {
     expect(s1.calculate()).toBe(3);
   });
 });
+
+const sn = (s: string, n: number): string => s + n;
+const s1 = sequence({ sn });
+testTypes<
+  "simple",
+  [
+    Expect<Equal<keyof typeof s1, "sn">>,
+    Expect<Equal<Parameters<(typeof s1)["sn"]>, [string, number]>>,
+    Expect<Equal<keyof ReturnType<(typeof s1)["sn"]>, "sn" | "calculate">>,
+    Expect<Equal<Parameters<ReturnType<(typeof s1)["sn"]>["sn"]>, [number]>>,
+    Expect<Equal<ReturnType<(typeof s1)["sn"]>["calculate"], () => string>>
+  ]
+>();
+
+const s2 = sequence({ double, toBoolean, toNumber });
+testTypes<
+  "many types",
+  [
+    Expect<Equal<keyof typeof s2, "double" | "toBoolean" | "toNumber">>,
+    Expect<Equal<Parameters<(typeof s2)["double"]>, [number]>>,
+    Expect<Equal<Parameters<(typeof s2)["toBoolean"]>, [number]>>,
+    Expect<Equal<Parameters<(typeof s2)["toNumber"]>, [boolean]>>,
+
+    Expect<Equal<keyof ReturnType<(typeof s2)["double"]>, "double" | "toBoolean" | "calculate">>,
+    Expect<Equal<Parameters<ReturnType<(typeof s2)["double"]>["double"]>, []>>,
+    Expect<Equal<Parameters<ReturnType<(typeof s2)["double"]>["toBoolean"]>, []>>,
+    Expect<Equal<ReturnType<(typeof s2)["double"]>["calculate"], () => number>>,
+    Expect<Equal<keyof ReturnType<(typeof s2)["toBoolean"]>, "toNumber" | "calculate">>,
+    Expect<Equal<Parameters<ReturnType<(typeof s2)["toBoolean"]>["toNumber"]>, []>>,
+    Expect<Equal<ReturnType<(typeof s2)["toBoolean"]>["calculate"], () => boolean>>
+  ]
+>();
+
+const fsn = (s: string, n: number): number => s.length + n;
+const fnsb = (n: number, s: string, b: boolean): string => s + n + b;
+const s3 = sequence({ fsn, fnsb });
+testTypes<
+  "many args",
+  [
+    Expect<Equal<keyof typeof s3, "fsn" | "fnsb">>,
+    Expect<Equal<Parameters<(typeof s3)["fsn"]>, [string, number]>>,
+    Expect<Equal<Parameters<(typeof s3)["fnsb"]>, [number, string, boolean]>>,
+
+    Expect<Equal<keyof ReturnType<(typeof s3)["fsn"]>, "fnsb" | "calculate">>,
+    Expect<Equal<Parameters<ReturnType<(typeof s3)["fsn"]>["fnsb"]>, [string, boolean]>>,
+    Expect<Equal<ReturnType<(typeof s3)["fsn"]>["calculate"], () => number>>,
+    Expect<Equal<keyof ReturnType<(typeof s3)["fnsb"]>, "fsn" | "calculate">>,
+    Expect<Equal<Parameters<ReturnType<(typeof s3)["fnsb"]>["fsn"]>, [number]>>,
+    Expect<Equal<ReturnType<(typeof s3)["fnsb"]>["calculate"], () => string>>
+  ]
+>();
+
+type Nested1 = ReturnType<(typeof s3)["fsn"]>;
+type Nested2 = ReturnType<Nested1["fnsb"]>;
+type Nested3 = ReturnType<Nested2["fsn"]>;
+type Nested4 = ReturnType<Nested3["fnsb"]>;
+testTypes<"recursive", [Expect<Equal<Nested1, Nested3>>, Expect<Equal<Nested2, Nested4>>]>();
